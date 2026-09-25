@@ -8,9 +8,10 @@ class BrandSerializer(serializers.ModelSerializer):
     
 class CigaretteEntrySerializer(serializers.ModelSerializer):
     brand_name = serializers.SerializerMethodField()
+    amount = serializers.SerializerMethodField()
     class Meta:
         model = CigaretteEntry
-        fields = ['id','brand',"brand_name","quantity","created_at"]
+        fields = ['id','brand',"brand_name","amount","quantity","created_at"]
       
     def validate_quantity(self,data):
         if data <=0:
@@ -23,5 +24,13 @@ class CigaretteEntrySerializer(serializers.ModelSerializer):
             return obj.brand.name
         
         return None
+    
+    def get_amount(self,obj):
+        if obj.brand:
+            return obj.quantity * obj.brand.price
+        
+        return 0
+    
+    
     
     
