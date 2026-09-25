@@ -3,7 +3,7 @@ from .serializers import BrandSerializer,CigaretteEntrySerializer
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Brand
+from .models import Brand,CigaretteEntry
 from django.shortcuts import get_object_or_404
 # Create your views here.
 class BrandApiView(APIView):
@@ -48,19 +48,47 @@ class BrandApiView(APIView):
         
 class CiggretteEntriesApiView(APIView):
     def get(self,request,**kwargs):
-        pass
-    def post(self,request):
-        brand = get_object_or_404(Brand,pk=request.data.get('brand'))
+        if kwargs:
+            entry = get_object_or_404(CigaretteEntry,pk=kwargs['pk'])
+            serializer = CigaretteEntrySerializer(entry)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        
+        entries = CigaretteEntry.objects.all()
+        serializer = CigaretteEntrySerializer(entries,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        brand = get_object_or_404(
+            Brand,
+            pk=request.data.get('brand')
+        )
+
         serializer = CigaretteEntrySerializer(data=request.data)
+
         if serializer.is_valid():
             serializer.save(
                 brand=brand
             )
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
     
-    
+    def patch(self,request,**kwargs):
+       entry = get_object_or_404(CigaretteEntry,pk=kwargs['pk'])
+       serializer = CigaretteEntrySerializer(entry,data=request.data,partial=True)
+       if serializer.is_valid():
+           serializer.save()
+           return Response(serializer.data,status=status.HTTP_200_OK)
+       
+       return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+   
+   
     
     
     
