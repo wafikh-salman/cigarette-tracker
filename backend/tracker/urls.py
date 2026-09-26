@@ -5,6 +5,7 @@ from .views import (
     DashboardApiView,
     BrandStatsApiView,
     BrandUsageTrendApiView,
+    InsightsApiView,
 )
 
 urlpatterns = [
@@ -15,8 +16,9 @@ urlpatterns = [
     path('dashboard/',DashboardApiView.as_view(),name="dashboard"),
     path('brand/<int:pk>/stats/',BrandStatsApiView.as_view(),name="brandstats"),
     path(
-    'brand/<int:id>/usage/',
-    BrandUsageTrendApiView.as_view(),
-    name='brandusage'
-),
+        'brand/<int:id>/usage/',
+        BrandUsageTrendApiView.as_view(),
+        name='brandusage'
+    ),
+    path('insights/', InsightsApiView.as_view(), name='insights'),
 ]

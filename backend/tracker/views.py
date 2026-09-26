@@ -255,7 +255,105 @@ class BrandUsageTrendApiView(APIView):
             list(usage),
             status=status.HTTP_200_OK
         )
-        
-   
-    
-    
+
+
+class InsightsApiView(APIView):
+    def get(self, request):
+        today = timezone.now().date()
+        # Monday of current week (weekday(): 0=Mon, ..., 6=Sun)
+        start_of_current_week = today - timedelta(days=today.weekday())
+        end_of_current_week = start_of_current_week + timedelta(days=6)
+
+        # Elapsed days in current week: Mon=1, Tue=2, ..., Sun=7
+        elapsed_days = today.weekday() + 1
+
+        # Previous completed calendar week (Monday to Sunday)
+        start_of_prev_week = start_of_current_week - timedelta(days=7)
+        end_of_prev_week = start_of_current_week - timedelta(days=1)
+
+        # 1. Current Week Queries
+        current_week_entries = CigaretteEntry.objects.filter(
+            created_at__date__gte=start_of_current_week,
+            created_at__date__lte=end_of_current_week
+        )
+
+        current_usage = current_week_entries.aggregate(
+            total_usage=Sum('quantity')
+        )['total_usage'] or 0
+
+        current_spending = current_week_entries.aggregate(
+            total_spending=Sum(F('quantity') * F('brand__price'))
+        )['total_spending'] or 0
+
+        current_avg = round(float(current_usage) / elapsed_days, 2) if elapsed_days > 0 else 0
+
+        # 2. Previous Week Queries
+        prev_week_entries = CigaretteEntry.objects.filter(
+            created_at__date__gte=start_of_prev_week,
+            created_at__date__lte=end_of_prev_week
+        )
+
+        prev_usage = prev_week_entries.aggregate(
+            total_usage=Sum('quantity')
+        )['total_usage'] or 0
+
+        prev_spending = prev_week_entries.aggregate(
+            total_spending=Sum(F('quantity') * F('brand__price'))
+        )['total_spending'] or 0
+
+        prev_avg = round(float(prev_usage) / 7.0, 2) if prev_usage > 0 else 0
+
+        # 3. Comparison
+        if prev_usage > 0:
+            usage_change_percent = round(((float(current_usage) - float(prev_usage)) / float(prev_usage)) * 100, 2)
+        else:
+            usage_change_percent = 0
+
+        raw_spending_change = float(current_spending) - float(prev_spending)
+        if raw_spending_change.is_integer():
+            spending_change = int(raw_spending_change)
+        else:
+            spending_change = round(raw_spending_change, 2)
+
+        # 4. Daily Usage for current week
+        daily_usage_qs = (
+            current_week_entries
+            .annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(quantity=Sum('quantity'))
+            .order_by('date')
+        )
+
+        daily_usage = [
+            {
+                "date": item["date"].strftime("%Y-%m-%d") if hasattr(item["date"], "strftime") else str(item["date"]),
+                "quantity": item["quantity"] or 0
+            }
+            for item in daily_usage_qs
+        ]
+
+        def clean_numeric(val):
+            if val is None:
+                return 0
+            f = float(val)
+            if f.is_integer():
+                return int(f)
+            return round(f, 2)
+
+        return Response({
+            "current_week": {
+                "usage": current_usage,
+                "spending": clean_numeric(current_spending),
+                "average_per_day": current_avg
+            },
+            "previous_week": {
+                "usage": prev_usage,
+                "spending": clean_numeric(prev_spending),
+                "average_per_day": prev_avg
+            },
+            "comparison": {
+                "usage_change_percent": usage_change_percent,
+                "spending_change": spending_change
+            },
+            "daily_usage": daily_usage
+        }, status=status.HTTP_200_OK)

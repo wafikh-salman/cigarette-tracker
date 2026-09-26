@@ -31,6 +31,42 @@ export function FloatingBottomNav({ activeTab = 'overview', onSelectTab }) {
         ),
     },
     {
+      id: 'insights',
+      label: 'Insights',
+      renderIcon: (isActive) =>
+        isActive ? (
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.35"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 3v18h18" />
+            <path d="M19 9l-5 5-4-4-3 3" />
+          </svg>
+        ) : (
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 3v18h18" />
+            <path d="M19 9l-5 5-4-4-3 3" />
+          </svg>
+        ),
+    },
+    {
       id: 'brands',
       label: 'Brands',
       renderIcon: (isActive) =>

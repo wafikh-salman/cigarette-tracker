@@ -10,7 +10,9 @@ export function Header({ activeTab = 'overview', onSelectTab }) {
   }).format(new Date());
 
   const pageTitle =
-    activeTab === 'brands'
+    activeTab === 'insights'
+      ? 'Insights'
+      : activeTab === 'brands'
       ? 'Brands'
       : activeTab === 'history'
       ? 'Usage History'
@@ -36,6 +38,15 @@ export function Header({ activeTab = 'overview', onSelectTab }) {
               onClick={() => onSelectTab && onSelectTab('overview')}
             >
               Overview
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'insights'}
+              className={`header-tab-btn ${activeTab === 'insights' ? 'active' : ''}`}
+              onClick={() => onSelectTab && onSelectTab('insights')}
+            >
+              Insights
             </button>
             <button
               type="button"
